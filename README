@@ -10,7 +10,8 @@ asynchronicity. Parseq embraces the paradigm of distributed message passing.
 You should structure your application as a set of requestor functions that each
 perform or manage a unit of work. This is a good design pattern in general. The
 temporal relationships between the requestors is specified by assembling the
-requestors into sets that are passed to the parseq factories.
+requestors into sets that are passed to the parseq factories. The units of work
+are kept distinct from the mechanics of control flow.
 
 parseq.js is a module that exports a parseq object that contains five factory
 functions:
@@ -30,26 +31,29 @@ A requestor function is any function that takes a callback and a value.
 
 The requestor will do some work or send a message to another process or system.
 When the work is done, the requestor signals the result by passing a value or
-an error report to its callback. The callback could be called in a future turn,
-so the requestor does not need to block, nor should it ever block.
+reason to its callback. The callback could be called in a future turn, so the
+requestor does not need to block, nor should it ever block.
+
+The 'value' may be of any type, including objects, arrays, and undefined.
 
 A requestor will pass its 'value' parameter to any requestors that it starts. A
-sequence will use the 'value' parameter to its first requestor. It will then
-pass the result of a requestor to the next requestor.
+sequence will pass the 'value' parameter to its first requestor. It will then
+pass the result of the previous requestor to the next requestor.
 
-The requestor should not throw an exception. It should communicate all failures
+A requestor should not throw an exception. It should communicate all failures
 through its callback. A requestor function may return a cancel function.
 
-A callback function takes two arguments: 'success' and 'error'.
+A callback function takes two arguments: 'value' and 'reason'.
 
-    a_callback(success, error)
+    a_callback(value, reason)
 
-If 'success' is undefined, then failure is being signalled. If 'success' is not
-undefined, then the value of 'success' is the result. 'error' may contain
+If 'value' is undefined, then failure is being signalled. 'reason' may contain
+information explaining the failure. If 'value' is not undefined, then success
+is being signalled and 'value' contains the result. 'reason' may contain
 information explaining the failure.
 
 A cancel function takes a 'reason' argument that might be propogated as the
-'error' of some callback.
+'reason' of some callback.
 
     cancel(reason)
 
@@ -82,9 +86,9 @@ parseq.fallback(requestor_array, milliseconds)
     parseq.fallback returns a requestor function. When the requestor is called,
     it will call the first element in 'requestor_array'. If that is ultimately
     successful, its value will be passed to the callback. But if the requestor
-    fails, the next element will be called, and so on. If none of the elements
-    is successful, then the fallback fails. If any succeeds, then the fallback
-    succeeds.
+    fails, the next requestor will be called, and so on. If none of the
+    requestors is successful, then the fallback fails. If any succeeds, then the
+    fallback succeeds.
 
     If 'milliseconds' is 0 or undefined, then there is no time limit. If
     'milliseconds' is greater than zero, then that imposes a time limit. The
@@ -118,15 +122,16 @@ parseq.parallel(required_array, optional_array, milliseconds, throttle, option)
     parallel operation is finished when all of the required requestors are done.
     All unfinished optional requestors will be cancelled.
 
-    If 'throttle' is not undefined, then there will be a limit on the number of
-    requestors that will be active at a time.
+    If 'throttle' is not undefined or 0, then there will be a limit on the
+    number of requestors that will be active at a time.
 
     The 'option' parameter works when there are both requireds and optionals.
     It can have one of three values:
 
-         undefined       The requireds must finish before the time limit.
-                         The optionals must finish before the requireds
-                         finish.
+         undefined       The optionals must finish before the requireds
+                         finish. The requireds must finish before the time
+                         limit, if there is one.
+
 
          true            The requireds and the optionals must all finish before
                          the time limit.
@@ -141,8 +146,8 @@ parseq.parallel_object(
 )
 
     parseq.parallel_object is like parseq.parallel except that it operates on
-    objects of requestors instead of on arrays of requestors. It successful,
-    it will deliver an object of results. A key from a requestor object will
+    objects of requestors instead of on arrays of requestors. It successful, it
+    will deliver an object of results. A key from an object of requestors will
     be used as the key for the requestor's result.
 
 
@@ -157,7 +162,7 @@ parseq.race(requestor_array, milliseconds, throttle)
     successful in the allotted time, then the race fails, and all pending
     requestors are cancelled.
 
-    If 'throttle' is not undefined, then there will be a limit on the
+    If 'throttle' is not undefined or zero, then there will be a limit on the
     number of requestors that will be active at a time.
 
 

@@ -9,15 +9,15 @@
     keys, length, min, parallel, parallel_object, push, race, sequence, some
 */
 
-function make_error(factory_name, reason, evidence) {
+function make_reason(factory_name, excuse, evidence) {
 
-// Make an error report object. These will be used for exceptions and callback
-// errors.
+// Make a reason object. These will be used for exceptions and cancellations.
+// They are made from Error objects for throwability.
 
     const report = new Error("parseq." + factory_name + (
-        (reason === undefined)
+        (excuse === undefined)
             ? ""
-            : ": " + reason
+            : ": " + excuse
     ));
     report.evidence = evidence;
     return report;
@@ -25,14 +25,14 @@ function make_error(factory_name, reason, evidence) {
 
 function is_callback(callback) {
 
-// A 'callback' function takes two arguments, 'success' and 'error'.
+// A 'callback' function takes two arguments, 'value' and 'reason'.
 
     return typeof callback === "function" && callback.length === 2;
 }
 
 function check_callback(callback, factory_name) {
     if (!is_callback(callback)) {
-        throw make_error(factory_name, "Not a callback.", callback);
+        throw make_reason(factory_name, "Not a callback.", callback);
     }
 }
 
@@ -52,7 +52,7 @@ function check_requestor_array(requestor_array, factory_name) {
             );
         })
     ) {
-        throw make_error(
+        throw make_reason(
             factory_name,
             "Bad requestors array.",
             requestor_array
@@ -67,7 +67,7 @@ function run(
     action,
     timeout,
     milliseconds,
-    throttle = requestor_array.length
+    throttle
 ) {
 
 // The 'run' function does the work that is common to all of the parseq
@@ -85,7 +85,7 @@ function run(
 
 // We need 'cancel' and 'start_requestor' functions.
 
-    function cancel(reason = make_error(factory_name, "Cancel.")) {
+    function cancel(reason = make_reason(factory_name, "Cancel.")) {
 
 // Stop all unfinished business. This can be called when a requestor fails.
 // It can also be called when a requestor succeeds, such as 'race' stopping
@@ -136,7 +136,7 @@ function run(
             const requestor = requestor_array[number];
             try {
                 cancel_array[number] = requestor(
-                    function start_requestor_callback(success, error) {
+                    function start_requestor_callback(value, reason) {
 
 // This callback function is called by the 'requestor' when it is done.
 // If we are no longer running, then this call will be ignored.
@@ -154,7 +154,7 @@ function run(
 
 // Call the 'action' function to let the requestor know what happened.
 
-                            action(success, error, number);
+                            action(value, reason, number);
 
 // Clear 'number' so this callback can not be used again.
 
@@ -162,11 +162,11 @@ function run(
 
 // If there are any requestors that are still waiting to start, then start the
 // next one. If the next requestor is in a sequence, then it will get the most
-// recent 'success'. The others get the 'initial_value'.
+// recent 'value'. The others get the 'initial_value'.
 
                             return start_requestor(
                                 (factory_name === "sequence")
-                                    ? success
+                                    ? value
                                     : initial_value
                             );
                         }
@@ -199,7 +199,7 @@ function run(
 // previous requestor finishes.
 
     if (!Number.isSafeInteger(throttle) || throttle < 1) {
-        throw make_error(factory_name, "Bad throttle.", throttle);
+        throw make_reason(factory_name, "Bad throttle.", throttle);
     }
     let repeat = Math.min(throttle, requestor_array.length);
     while (repeat > 0) {
@@ -215,7 +215,7 @@ function run(
                 timer_id = setTimeout(timeout, milliseconds);
             }
         } else {
-            throw make_error(factory_name, "Bad milliseconds.", milliseconds);
+            throw make_reason(factory_name, "Bad milliseconds.", milliseconds);
         }
     }
 
@@ -244,14 +244,14 @@ function fallback(requestor_array, milliseconds) {
             "fallback",
             requestor_array,
             initial_value,
-            function fallback_action(success, error, ignore) {
+            function fallback_action(value, reason, ignore) {
                 number_pending -= 1;
 
-// If we got a success, then we are done. Cancel any remaining requestors.
+// If we got a success, then we are done. We call cancel just to stop the timer.
 
-                if (success !== undefined) {
+                if (value !== undefined) {
                     cancel();
-                    callback(success);
+                    callback(value);
                     callback = undefined;
                 }
 
@@ -259,15 +259,15 @@ function fallback(requestor_array, milliseconds) {
 // then we have a failure.
 
                 if (number_pending < 1) {
-                    cancel(error);
-                    callback(undefined, error);
+                    cancel(reason);
+                    callback(undefined, reason);
                     callback = undefined;
                 }
             },
             function fallback_timeout() {
-                let error = make_error("fallback", "Timeout.", milliseconds);
-                cancel(error);
-                callback(undefined, error);
+                let reason = make_reason("fallback", "Timeout.", milliseconds);
+                cancel(reason);
+                callback(undefined, reason);
                 callback = undefined;
             },
             milliseconds,
@@ -303,7 +303,7 @@ function parallel(
 
 // If both are empty, then there is probably a mistake.
 
-            throw make_error(
+            throw make_reason(
                 "parallel",
                 "Missing requestor array.",
                 required_array
@@ -328,7 +328,7 @@ function parallel(
         } else {
             requestor_array = required_array.concat(optional_array);
             if (option !== undefined && typeof option !== "boolean") {
-                throw make_error("parallel", "Bad option.", option);
+                throw make_reason("parallel", "Bad option.", option);
             }
         }
     }
@@ -348,12 +348,12 @@ function parallel(
             "parallel",
             requestor_array,
             initial_value,
-            function parallel_action(success, error, number) {
+            function parallel_action(value, reason, number) {
 
 // The action function gets the result of each requestor in the array.
-// 'parallel' wants to return an array of all of the successes it sees.
+// 'parallel' wants to return an array of all of the values it sees.
 
-                results[number] = success;
+                results[number] = value;
                 number_pending -= 1;
 
 // If the requestor was one of the requireds, make sure it was successful.
@@ -362,9 +362,9 @@ function parallel(
 
                 if (number < number_required) {
                     number_pending_required_array -= 1;
-                    if (success === undefined) {
-                        cancel(error);
-                        callback(undefined, error);
+                    if (value === undefined) {
+                        cancel(reason);
+                        callback(undefined, reason);
                         callback = undefined;
                         return;
                     }
@@ -380,7 +380,7 @@ function parallel(
                         && number_pending_required_array < 1
                     )
                 ) {
-                    cancel(make_error("parallel", "Optional."));
+                    cancel(make_reason("parallel", "Optional."));
                     callback(results);
                     callback = undefined;
                 }
@@ -392,7 +392,7 @@ function parallel(
 // optionals to run until the requireds finish or the the time expires,
 // whichever happens last.
 
-                const reason = make_error(
+                const reason = make_reason(
                     "parallel",
                     "Timeout.",
                     milliseconds
@@ -418,7 +418,7 @@ function parallel(
                 }
             },
             milliseconds,
-            throttle
+            throttle || required_array.length
         );
         return cancel;
     };
@@ -446,7 +446,7 @@ function parallel_object(
 
     if (required_object !== undefined) {
         if (typeof required_object !== "object") {
-            throw make_error(
+            throw make_reason(
                 "parallel_object",
                 "Type mismatch.",
                 required_object
@@ -469,7 +469,7 @@ function parallel_object(
 
     if (optional_object !== undefined) {
         if (typeof optional_object !== "object") {
-            throw make_error(
+            throw make_reason(
                 "parallel_object",
                 "Type mismatch.",
                 optional_object
@@ -485,7 +485,7 @@ function parallel_object(
                     required_object !== undefined
                     && required_object[name] !== undefined
                 ) {
-                    throw make_error(
+                    throw make_reason(
                         "parallel_object",
                         "Duplicate name.",
                         name
@@ -500,7 +500,7 @@ function parallel_object(
 // Make sure that we harvested something.
 
     if (names.length === 0) {
-        return make_error(
+        return make_reason(
             "parallel_object",
             "No requestors.",
             required_object
@@ -527,15 +527,15 @@ function parallel_object(
         return parallel_requestor(
 
 // We pass our callback to the parallel requestor,
-// converting its success into an object.
+// converting its value into an object.
 
-            function parallel_object_callback(success, error) {
-                if (success === undefined) {
-                    return callback(success, error);
+            function parallel_object_callback(value, reason) {
+                if (value === undefined) {
+                    return callback(value, reason);
                 }
                 const object = Object.create(null);
                 names.forEach(function (name, index) {
-                    object[name] = success[index];
+                    object[name] = value[index];
                 });
                 return callback(object);
             },
@@ -556,33 +556,33 @@ function race(requestor_array, milliseconds, throttle) {
             "race",
             requestor_array,
             initial_value,
-            function race_action(success, error, number) {
+            function race_action(value, reason, number) {
                 number_pending -= 1;
 
-// We have a winner. Cancel the losers and hand the result to the callback.
+// We have a winner. Cancel the losers and hand the value to the callback.
 
-                if (success !== undefined) {
-                    cancel(make_error("race", "Loser.", number));
-                    callback(success);
+                if (value !== undefined) {
+                    cancel(make_reason("race", "Loser.", number));
+                    callback(value);
                     callback = undefined;
                 }
 
 // There was no winner. Signal a failure.
 
                 if (number_pending < 1) {
-                    cancel(error);
-                    callback(undefined, error);
+                    cancel(reason);
+                    callback(undefined, reason);
                     callback = undefined;
                 }
             },
             function race_timeout() {
-                let error = make_error("race", "Timeout.", milliseconds);
-                cancel(error);
-                callback(undefined, error);
+                let reason = make_reason("race", "Timeout.", milliseconds);
+                cancel(reason);
+                callback(undefined, reason);
                 callback = undefined;
             },
             milliseconds,
-            throttle
+            throttle || requestor_array.length
         );
         return cancel;
     };
@@ -601,31 +601,32 @@ function sequence(requestor_array, milliseconds) {
             "sequence",
             requestor_array,
             initial_value,
-            function sequence_action(success, error, ignore) {
+            function sequence_action(value, reason, ignore) {
                 if (callback !== undefined) {
                     number_pending -= 1;
 
 // If any requestor fails, then the sequence fails.
 
-                    if (success === undefined) {
-                        cancel(error);
-                        callback(undefined, error);
+                    if (value === undefined) {
+                        cancel(reason);
+                        callback(undefined, reason);
                         callback = undefined;
                     }
 
 // If we make it to the end, then success.
+// We call cancel just to stop the timer.
 
                     if (number_pending < 1) {
                         cancel();
-                        callback(success);
+                        callback(value);
                         callback = undefined;
                     }
                 }
             },
             function sequence_timeout() {
-                let error = make_error("sequence", "Timeout.", milliseconds);
-                cancel(error);
-                callback(undefined, error);
+                let reason = make_reason("sequence", "Timeout.", milliseconds);
+                cancel(reason);
+                callback(undefined, reason);
                 callback = undefined;
             },
             milliseconds,
