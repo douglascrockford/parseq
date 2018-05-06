@@ -177,3 +177,11 @@ parseq.sequence(requestor_array, milliseconds)
     If the optional 'milliseconds' argument is supplied, then if all of the
     requestors have not all completed in the allotted time, then the
     sequence fails and the pending requestor is cancelled.
+
+
+A demonstration of parseq is provided in three files:
+
+    demo.html
+    demo.css
+    demo.js
+

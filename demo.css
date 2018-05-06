@@ -1,0 +1,60 @@
+body {
+    background-color: lightblue;
+    font-family: Programma, monospace;
+}
+
+h1 {
+    text-align: center;
+}
+
+#reset {
+    background-color: aliceblue;
+    border: 2pt solid navy;
+    border-radius: 0.5em;
+    cursor: pointer;
+    padding-left: 1em;
+    padding-right: 1em;
+    text-align: center;
+}
+
+#reset:hover {
+    background-color: beige;
+}
+
+#reset:active {
+    background-color: mistyrose;
+}
+
+fieldset {
+    background-color: aliceblue;
+    border: 2px solid navy;
+    border-radius: 0.5em;
+    float: left;
+    font-size: 125%;
+    margin: 0.25em;
+    text-align: center;
+}
+
+legend {
+    background-color: white;
+    border: 2px solid navy;
+    border-radius: 0.5em;
+    font-size: 125%;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+input {
+    border: 2px solid black;
+    cursor: pointer;
+}
+
+input[value="success"]:hover {
+    background-color: lightgreen;
+    border: 2px solid green;
+}
+
+input[value="failure"]:hover {
+    background-color: pink;
+    border: 2px solid red;
+}
