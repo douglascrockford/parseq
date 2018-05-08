@@ -239,13 +239,13 @@ function fallback(requestor_array, milliseconds) {
 
     return function fallback_requestor(callback, initial_value) {
         check_callback(callback, "fallback");
-        let number_pending = requestor_array.length;
+        let number_of_pending = requestor_array.length;
         let cancel = run(
             "fallback",
             requestor_array,
             initial_value,
             function fallback_action(value, reason, ignore) {
-                number_pending -= 1;
+                number_of_pending -= 1;
 
 // If we got a success, then we are done. We call cancel just to stop the timer.
 
@@ -258,7 +258,7 @@ function fallback(requestor_array, milliseconds) {
 // If we got all of the results without seeing a success,
 // then we have a failure.
 
-                if (number_pending < 1) {
+                if (number_of_pending < 1) {
                     cancel(reason);
                     callback(undefined, reason);
                     callback = undefined;
@@ -291,14 +291,14 @@ function parallel(
 // The parallel function is the most complex of these factories. It can take an
 // second array of requestors that has a more forgiving failure policy.
 
-    let number_required;
+    let number_of_required;
     let requestor_array;
 
 // There are four cases because 'required_array' and 'optional_array' can both
 // be empty.
 
     if (required_array === undefined || required_array.length === 0) {
-        number_required = 0;
+        number_of_required = 0;
         if (optional_array === undefined || optional_array.length === 0) {
 
 // If both are empty, then there is probably a mistake.
@@ -318,7 +318,7 @@ function parallel(
 
 // If there is only 'required_array', then it is the 'requestors_array'.
 
-        number_required = required_array.length;
+        number_of_required = required_array.length;
         if (optional_array === undefined || optional_array.length === 0) {
             requestor_array = required_array;
             option = undefined;
@@ -338,8 +338,8 @@ function parallel(
     check_requestor_array(requestor_array, "parallel");
     return function parallel_requestor(callback, initial_value) {
         check_callback(callback, "parallel");
-        let number_pending = requestor_array.length;
-        let number_pending_required_array = number_required;
+        let number_of_pending = requestor_array.length;
+        let number_of_pending_required_array = number_of_required;
         let results = [];
 
 // 'run' gets it started.
@@ -354,14 +354,14 @@ function parallel(
 // 'parallel' wants to return an array of all of the values it sees.
 
                 results[number] = value;
-                number_pending -= 1;
+                number_of_pending -= 1;
 
 // If the requestor was one of the requireds, make sure it was successful.
 // If it failed, then the parallel operation fails. If an optionals requestor
 // fails, we can still continue.
 
-                if (number < number_required) {
-                    number_pending_required_array -= 1;
+                if (number < number_of_required) {
+                    number_of_pending_required_array -= 1;
                     if (value === undefined) {
                         cancel(reason);
                         callback(undefined, reason);
@@ -374,10 +374,10 @@ function parallel(
 // do not have an 'option', then we are done.
 
                 if (
-                    number_pending < 1
+                    number_of_pending < 1
                     || (
                         option === undefined
-                        && number_pending_required_array < 1
+                        && number_of_pending_required_array < 1
                     )
                 ) {
                     cancel(make_reason("parallel", "Optional."));
@@ -399,7 +399,7 @@ function parallel(
                 );
                 if (option === false) {
                     option = undefined;
-                    if (number_pending_required_array < 1) {
+                    if (number_of_pending_required_array < 1) {
                         cancel(reason);
                         callback(results);
                     }
@@ -409,7 +409,7 @@ function parallel(
 // then the parallel operation is successful.
 
                     cancel(reason);
-                    if (number_pending_required_array < 1) {
+                    if (number_of_pending_required_array < 1) {
                         callback(results);
                     } else {
                         callback(undefined, reason);
@@ -418,7 +418,7 @@ function parallel(
                 }
             },
             milliseconds,
-            throttle || required_array.length
+            throttle || requestor_array.length
         );
         return cancel;
     };
@@ -551,13 +551,13 @@ function race(requestor_array, milliseconds, throttle) {
     check_requestor_array(requestor_array, "race");
     return function race_requestor(callback, initial_value) {
         check_callback(callback, "race");
-        let number_pending = requestor_array.length;
+        let number_of_pending = requestor_array.length;
         let cancel = run(
             "race",
             requestor_array,
             initial_value,
             function race_action(value, reason, number) {
-                number_pending -= 1;
+                number_of_pending -= 1;
 
 // We have a winner. Cancel the losers and hand the value to the callback.
 
@@ -569,7 +569,7 @@ function race(requestor_array, milliseconds, throttle) {
 
 // There was no winner. Signal a failure.
 
-                if (number_pending < 1) {
+                if (number_of_pending < 1) {
                     cancel(reason);
                     callback(undefined, reason);
                     callback = undefined;
@@ -596,14 +596,14 @@ function sequence(requestor_array, milliseconds) {
     check_requestor_array(requestor_array, "sequence");
     return function sequence_requestor(callback, initial_value) {
         check_callback(callback, "sequence");
-        let number_pending = requestor_array.length;
+        let number_of_pending = requestor_array.length;
         let cancel = run(
             "sequence",
             requestor_array,
             initial_value,
             function sequence_action(value, reason, ignore) {
                 if (callback !== undefined) {
-                    number_pending -= 1;
+                    number_of_pending -= 1;
 
 // If any requestor fails, then the sequence fails.
 
@@ -616,7 +616,7 @@ function sequence(requestor_array, milliseconds) {
 // If we make it to the end, then success.
 // We call cancel just to stop the timer.
 
-                    if (number_pending < 1) {
+                    if (number_of_pending < 1) {
                         cancel();
                         callback(value);
                         callback = undefined;
