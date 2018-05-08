@@ -226,60 +226,6 @@ function run(
 
 // The factories: --------------------------------------------------------------
 
-function fallback(requestor_array, milliseconds) {
-
-// The fallback factory will try each requestor in order until it finds a
-// successful one.
-
-    check_requestor_array(requestor_array, "fallback");
-
-// The fallback factory returns a requestor. It calls 'run' to manage the
-// requestors. The 'fallback_action' function will be called with the result
-// from each requestor.
-
-    return function fallback_requestor(callback, initial_value) {
-        check_callback(callback, "fallback");
-        let number_of_pending = requestor_array.length;
-        let cancel = run(
-            "fallback",
-            requestor_array,
-            initial_value,
-            function fallback_action(value, reason, ignore) {
-                number_of_pending -= 1;
-
-// If we got a success, then we are done. We call cancel just to stop the timer.
-
-                if (value !== undefined) {
-                    cancel();
-                    callback(value);
-                    callback = undefined;
-                }
-
-// If we got all of the results without seeing a success,
-// then we have a failure.
-
-                if (number_of_pending < 1) {
-                    cancel(reason);
-                    callback(undefined, reason);
-                    callback = undefined;
-                }
-            },
-            function fallback_timeout() {
-                let reason = make_reason("fallback", "Timeout.", milliseconds);
-                cancel(reason);
-                callback(undefined, reason);
-                callback = undefined;
-            },
-            milliseconds,
-            1
-        );
-
-// The requestor returns its 'cancel' function.
-
-        return cancel;
-    };
-}
-
 function parallel(
     required_array,
     optional_array,
@@ -586,6 +532,14 @@ function race(requestor_array, milliseconds, throttle) {
         );
         return cancel;
     };
+}
+
+function fallback(requestor_array, milliseconds) {
+
+// The fallback factory will try each requestor, one at a time, until it finds
+// a successful one. A fallback is just a throttled race.
+
+    return race(requestor_array, milliseconds, 1);
 }
 
 function sequence(requestor_array, milliseconds) {
