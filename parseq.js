@@ -6,7 +6,8 @@
 
 /*property
     concat, create, evidence, fallback, forEach, freeze, isArray, isSafeInteger,
-    keys, length, min, parallel, parallel_object, push, race, sequence, some
+    keys, length, min, parallel, parallel_object, pop, push, race, sequence,
+    some
 */
 
 function make_reason(factory_name, excuse, evidence) {
@@ -237,6 +238,11 @@ function parallel(
 // The parallel function is the most complex of these factories. It can take an
 // second array of requestors that has a more forgiving failure policy.
 
+    let factory_name = "parallel";
+    if (option === "sequence") {
+        factory_name = "sequence";
+        option = undefined;
+    }
     let number_of_required;
     let requestor_array;
 
@@ -250,7 +256,7 @@ function parallel(
 // If both are empty, then there is probably a mistake.
 
             throw make_reason(
-                "parallel",
+                factory_name,
                 "Missing requestor array.",
                 required_array
             );
@@ -262,7 +268,7 @@ function parallel(
         option = true;
     } else {
 
-// If there is only 'required_array', then it is the 'requestors_array'.
+// If there is only 'required_array', then it is the 'requestor_array'.
 
         number_of_required = required_array.length;
         if (optional_array === undefined || optional_array.length === 0) {
@@ -274,16 +280,16 @@ function parallel(
         } else {
             requestor_array = required_array.concat(optional_array);
             if (option !== undefined && typeof option !== "boolean") {
-                throw make_reason("parallel", "Bad option.", option);
+                throw make_reason(factory_name, "Bad option.", option);
             }
         }
     }
 
 // We check the array and return the requestor.
 
-    check_requestor_array(requestor_array, "parallel");
+    check_requestor_array(requestor_array, factory_name);
     return function parallel_requestor(callback, initial_value) {
-        check_callback(callback, "parallel");
+        check_callback(callback, factory_name);
         let number_of_pending = requestor_array.length;
         let number_of_pending_required_array = number_of_required;
         let results = [];
@@ -291,7 +297,7 @@ function parallel(
 // 'run' gets it started.
 
         let cancel = run(
-            "parallel",
+            factory_name,
             requestor_array,
             initial_value,
             function parallel_action(value, reason, number) {
@@ -326,8 +332,12 @@ function parallel(
                         && number_of_pending_required_array < 1
                     )
                 ) {
-                    cancel(make_reason("parallel", "Optional."));
-                    callback(results);
+                    cancel(make_reason(factory_name, "Optional."));
+                    callback(
+                        (factory_name === "sequence")
+                            ? results.pop()
+                            : results
+                    );
                     callback = undefined;
                 }
             },
@@ -339,7 +349,7 @@ function parallel(
 // whichever happens last.
 
                 const reason = make_reason(
-                    "parallel",
+                    factory_name,
                     "Timeout.",
                     milliseconds
                 );
@@ -545,49 +555,10 @@ function fallback(requestor_array, milliseconds) {
 function sequence(requestor_array, milliseconds) {
 
 // A sequence runs each requestor in order, passing results to the next,
-// as long as they are all successful.
+// as long as they are all successful. A sequence is a throttled parallel.
 
-    check_requestor_array(requestor_array, "sequence");
-    return function sequence_requestor(callback, initial_value) {
-        check_callback(callback, "sequence");
-        let number_of_pending = requestor_array.length;
-        let cancel = run(
-            "sequence",
-            requestor_array,
-            initial_value,
-            function sequence_action(value, reason, ignore) {
-                if (callback !== undefined) {
-                    number_of_pending -= 1;
+    return parallel(requestor_array, undefined, milliseconds, 1, "sequence");
 
-// If any requestor fails, then the sequence fails.
-
-                    if (value === undefined) {
-                        cancel(reason);
-                        callback(undefined, reason);
-                        callback = undefined;
-                    }
-
-// If we make it to the end, then success.
-// We call cancel just to stop the timer.
-
-                    if (number_of_pending < 1) {
-                        cancel();
-                        callback(value);
-                        callback = undefined;
-                    }
-                }
-            },
-            function sequence_timeout() {
-                let reason = make_reason("sequence", "Timeout.", milliseconds);
-                cancel(reason);
-                callback(undefined, reason);
-                callback = undefined;
-            },
-            milliseconds,
-            1
-        );
-        return cancel;
-    };
 }
 
 const parseq = Object.create(null);
