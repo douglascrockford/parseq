@@ -380,7 +380,60 @@ function parallel(
     };
 }
 
-function parallel_object(
+function race(requestor_array, milliseconds, throttle) {
+
+// A race starts all of its requestors at once. The first success wins.
+
+    check_requestor_array(requestor_array, "race");
+    return function race_requestor(callback, initial_value) {
+        check_callback(callback, "race");
+        let number_of_pending = requestor_array.length;
+        let cancel = run(
+            "race",
+            requestor_array,
+            initial_value,
+            function race_action(value, reason, number) {
+                number_of_pending -= 1;
+
+// We have a winner. Cancel the losers and hand the value to the callback.
+
+                if (value !== undefined) {
+                    cancel(make_reason("race", "Loser.", number));
+                    callback(value);
+                    callback = undefined;
+                }
+
+// There was no winner. Signal a failure.
+
+                if (number_of_pending < 1) {
+                    cancel(reason);
+                    callback(undefined, reason);
+                    callback = undefined;
+                }
+            },
+            function race_timeout() {
+                let reason = make_reason("race", "Timeout.", milliseconds);
+                cancel(reason);
+                callback(undefined, reason);
+                callback = undefined;
+            },
+            milliseconds,
+            throttle || requestor_array.length
+        );
+        return cancel;
+    };
+}
+
+const parseq = Object.create(null);
+parseq.fallback = function fallback(requestor_array, milliseconds) {
+
+// The fallback factory will try each requestor, one at a time, until it finds
+// a successful one. A fallback is just a throttled race.
+
+    return race(requestor_array, milliseconds, 1);
+};
+parseq.parallel = parallel;
+parseq.parallel_object = function parallel_object(
     required_object,
     optional_object,
     milliseconds,
@@ -498,73 +551,14 @@ function parallel_object(
             initial_value
         );
     };
-}
-
-function race(requestor_array, milliseconds, throttle) {
-
-// A race starts all of its requestors at once. The first success wins.
-
-    check_requestor_array(requestor_array, "race");
-    return function race_requestor(callback, initial_value) {
-        check_callback(callback, "race");
-        let number_of_pending = requestor_array.length;
-        let cancel = run(
-            "race",
-            requestor_array,
-            initial_value,
-            function race_action(value, reason, number) {
-                number_of_pending -= 1;
-
-// We have a winner. Cancel the losers and hand the value to the callback.
-
-                if (value !== undefined) {
-                    cancel(make_reason("race", "Loser.", number));
-                    callback(value);
-                    callback = undefined;
-                }
-
-// There was no winner. Signal a failure.
-
-                if (number_of_pending < 1) {
-                    cancel(reason);
-                    callback(undefined, reason);
-                    callback = undefined;
-                }
-            },
-            function race_timeout() {
-                let reason = make_reason("race", "Timeout.", milliseconds);
-                cancel(reason);
-                callback(undefined, reason);
-                callback = undefined;
-            },
-            milliseconds,
-            throttle || requestor_array.length
-        );
-        return cancel;
-    };
-}
-
-function fallback(requestor_array, milliseconds) {
-
-// The fallback factory will try each requestor, one at a time, until it finds
-// a successful one. A fallback is just a throttled race.
-
-    return race(requestor_array, milliseconds, 1);
-}
-
-function sequence(requestor_array, milliseconds) {
+};
+parseq.race = race;
+parseq.sequence = function sequence(requestor_array, milliseconds) {
 
 // A sequence runs each requestor in order, passing results to the next,
 // as long as they are all successful. A sequence is a throttled parallel.
 
     return parallel(requestor_array, undefined, milliseconds, 1, "sequence");
 
-}
-
-const parseq = Object.create(null);
-parseq.fallback = fallback;
-parseq.parallel = parallel;
-parseq.parallel_object = parallel_object;
-parseq.race = race;
-parseq.sequence = sequence;
+};
 export default Object.freeze(parseq);
