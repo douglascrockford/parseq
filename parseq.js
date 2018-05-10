@@ -15,13 +15,13 @@ function make_reason(factory_name, excuse, evidence) {
 // Make a reason object. These will be used for exceptions and cancellations.
 // They are made from Error objects for throwability.
 
-    const report = new Error("parseq." + factory_name + (
+    const reason = new Error("parseq." + factory_name + (
         (excuse === undefined)
             ? ""
             : ": " + excuse
     ));
-    report.evidence = evidence;
-    return report;
+    reason.evidence = evidence;
+    return reason;
 }
 
 function is_callback(callback) {
@@ -132,7 +132,7 @@ function run(
             next_number += 1;
 
 // Call the next requestor, passing in a callback function,
-// saving the cancel function the requestor might return.
+// saving the cancel function that the requestor might return.
 
             const requestor = requestor_array[number];
             try {
@@ -393,7 +393,7 @@ function race(requestor_array, milliseconds, throttle, factory_name = "race") {
             function race_action(value, reason, number) {
                 number_of_pending -= 1;
 
-// We have a winner. Cancel the losers and hand the value to the callback.
+// We have a winner. Cancel the losers and pass the value to the callback.
 
                 if (value !== undefined) {
                     cancel(make_reason(factory_name, "Loser.", number));
