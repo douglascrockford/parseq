@@ -18,9 +18,9 @@ functions:
 
 fallback(requestor_array, milliseconds)
 
-parallel(required_array, optional_array, milliseconds, throttle, option)
+parallel(required_array, optional_array, milliseconds, option, throttle)
 
-parallel_object(required_object, optional_object, milliseconds, throttle, option)
+parallel_object(required_object, optional_object, milliseconds, option, throttle)
 
 race(requestor_array, milliseconds, throttle)
 
@@ -103,7 +103,7 @@ parseq.fallback(requestor_array, milliseconds)
     called when the result is no longer needed.
 
 
-parseq.parallel(required_array, optional_array, milliseconds, throttle, option)
+parseq.parallel(required_array, optional_array, milliseconds, option, throttle)
 
     parseq.parallel returns a requestor that processes many requestors in
     parallel, producing an array of all of the successful results. It does not
@@ -127,9 +127,6 @@ parseq.parallel(required_array, optional_array, milliseconds, throttle, option)
     parallel operation is finished when all of the required requestors are done.
     All unfinished optional requestors will be cancelled.
 
-    If 'throttle' is not undefined or 0, then there will be a limit on the
-    number of requestors that will be active at a time.
-
     The 'option' parameter works when there are both requireds and optionals.
     It can have one of three values:
 
@@ -144,9 +141,12 @@ parseq.parallel(required_array, optional_array, milliseconds, throttle, option)
                         must finish before the requireds finish and the
                         time limit, whichever is later.
 
+    If 'throttle' is not undefined or 0, then there will be a limit on the
+    number of requestors that will be active at a time.
+
 
 parseq.parallel_object(
-    required_object, optional_object, milliseconds, throttle, option
+    required_object, optional_object, milliseconds, option, throttle
 )
 
     parseq.parallel_object is like parseq.parallel except that it operates on

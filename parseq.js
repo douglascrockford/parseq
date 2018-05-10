@@ -231,8 +231,8 @@ function parallel(
     required_array,
     optional_array,
     milliseconds,
-    throttle,
     option,
+    throttle,
     factory_name = "parallel"
 ) {
 
@@ -444,8 +444,8 @@ parseq.parallel_object = function parallel_object(
     required_object,
     optional_object,
     milliseconds,
-    throttle,
-    option
+    option,
+    throttle
 ) {
 
 // 'parallel_object' is similar to 'parallel' except that it takes and produces
@@ -526,8 +526,8 @@ parseq.parallel_object = function parallel_object(
         required_array,
         optional_array,
         milliseconds,
-        throttle,
         option,
+        throttle,
         "parallel_object"
     );
 
@@ -566,8 +566,8 @@ parseq.sequence = function sequence(requestor_array, milliseconds) {
         requestor_array,
         undefined,
         milliseconds,
-        1,
         undefined,
+        1,
         "sequence"
     );
 
