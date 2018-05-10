@@ -377,10 +377,14 @@ function parallel(
     };
 }
 
-function race(requestor_array, milliseconds, throttle, factory_name = "race") {
+function race(requestor_array, milliseconds, throttle) {
 
 // The race factory returns a requestor that starts all of the requestors in
 // requestor_array at once. The first success wins.
+
+    const factory_name = (throttle === 1)
+        ? "fallback"
+        : "race";
 
     check_requestor_array(requestor_array, factory_name);
     return function race_requestor(callback, initial_value) {
@@ -433,7 +437,7 @@ parseq.fallback = function fallback(requestor_array, milliseconds) {
 // 'requestor_array', one at a time, until it finds a successful one. A fallback
 // is just a throttled race.
 
-    return race(requestor_array, milliseconds, 1, "fallback");
+    return race(requestor_array, milliseconds, 1);
 };
 parseq.parallel = parallel;
 parseq.parallel_object = function parallel_object(
