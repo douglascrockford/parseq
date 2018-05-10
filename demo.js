@@ -6,7 +6,9 @@
 
 // This interacts with the browser with Plain Old DOM.
 
-/*jslint browser */
+/*jslint
+    browser
+*/
 
 /*property
     addEventListener, appendChild, backgroundColor, body, createElement,
