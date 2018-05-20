@@ -1,3 +1,5 @@
+/* demo.css */
+
 body {
     background-color: lightblue;
     font-family: Programma, monospace;
@@ -36,12 +38,17 @@ fieldset {
 }
 
 legend {
-    background-color: white;
+    background-color: snow;
     border: 2px solid navy;
     border-radius: 0.5em;
+    cursor: default;
     font-size: 125%;
     padding-left: 0.5em;
     padding-right: 0.5em;
+}
+
+fieldset:hover:hover, legend:hover {
+    background-color: papayawhip;
 }
 
 input {
