@@ -47,7 +47,7 @@ legend {
     padding-right: 0.5em;
 }
 
-fieldset:hover:hover, legend:hover {
+fieldset:hover, legend:hover {
     background-color: papayawhip;
 }
 
