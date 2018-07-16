@@ -1,6 +1,6 @@
 // parseq.js
 
-// Better living through asynchronicity!
+// Better living through sporadicity!
 
 /*jslint node */
 
