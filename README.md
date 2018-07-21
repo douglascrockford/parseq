@@ -90,11 +90,12 @@ If the `milliseconds` argument is supplied, then a time limit is imposed. The re
 If there is no time limit, and if there are required requestors, then the parallel operation is finished when all of the required requestors are done. All unfinished optional requestors will be cancelled.
 
 The `option` parameter works when there are both required requestors and optional requestors.  It can have one of three values:
-`option` | Effect
+
+|`option` | Effect
 -------- | ------
-`undefined` | The optional requestors must finish before the required requestors finish. The required requestors must finish before the time limit, if there is one.
-`true` | The required requestors and the optional requestors must all finish before the time limit.
-`false` | The required requestors have no time limit. The optional requestors must finish before the required finish and the time limit, whichever is later.
+|`undefined` | The optional requestors must finish before the required requestors finish. The required requestors must finish before the time limit, if there is one.
+|`true` | The required requestors and the optional requestors must all finish before the time limit.
+|`false` | The required requestors have no time limit. The optional requestors must finish before the required finish and the time limit, whichever is later.
 
 If `throttle` is not `undefined` or `0`, then there will be a limit on the number of requestors that will be active at a time.
 
