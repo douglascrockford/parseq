@@ -67,13 +67,13 @@ function run(
     initial_value,
     action,
     timeout,
-    milliseconds,
+    time_limit,
     throttle = 0
 ) {
 
 // The 'run' function does the work that is common to all of the parseq
 // factories. It takes the name of the factory, an array of requestors, an
-// initial value, an action callback, a timeout callback, a time limit in
+// initial value, an action callback, a timeout callback, a time_limit in
 // milliseconds, and a throttle.
 
 // If all goes well we will be calling all of the requestor functions in the
@@ -192,13 +192,13 @@ function run(
 
 // If a timeout was requested, start the timer.
 
-    if (milliseconds !== undefined) {
-        if (typeof milliseconds === "number" && milliseconds >= 0) {
-            if (milliseconds > 0) {
-                timer_id = setTimeout(timeout, milliseconds);
+    if (time_limit !== undefined) {
+        if (typeof time_limit === "number" && time_limit >= 0) {
+            if (time_limit > 0) {
+                timer_id = setTimeout(timeout, time_limit);
             }
         } else {
-            throw make_reason(factory_name, "Bad milliseconds.", milliseconds);
+            throw make_reason(factory_name, "Bad time limit.", time_limit);
         }
     }
 
@@ -230,7 +230,7 @@ function run(
 function parallel(
     required_array,
     optional_array,
-    milliseconds,
+    time_limit,
     time_option,
     throttle,
     factory_name = "parallel"
@@ -352,7 +352,7 @@ function parallel(
                 const reason = make_reason(
                     factory_name,
                     "Timeout.",
-                    milliseconds
+                    time_limit
                 );
                 if (time_option === false) {
                     time_option = undefined;
@@ -374,14 +374,14 @@ function parallel(
                     callback = undefined;
                 }
             },
-            milliseconds,
+            time_limit,
             throttle
         );
         return cancel;
     };
 }
 
-function race(requestor_array, milliseconds, throttle) {
+function race(requestor_array, time_limit, throttle) {
 
 // The race factory returns a requestor that starts all of the requestors in
 // requestor_array at once. The first success wins.
@@ -421,13 +421,13 @@ function race(requestor_array, milliseconds, throttle) {
                 let reason = make_reason(
                     factory_name,
                     "Timeout.",
-                    milliseconds
+                    time_limit
                 );
                 cancel(reason);
                 callback(undefined, reason);
                 callback = undefined;
             },
-            milliseconds,
+            time_limit,
             throttle
         );
         return cancel;
@@ -435,19 +435,19 @@ function race(requestor_array, milliseconds, throttle) {
 }
 
 const parseq = Object.create(null);
-parseq.fallback = function fallback(requestor_array, milliseconds) {
+parseq.fallback = function fallback(requestor_array, time_limit) {
 
 // The fallback factory will return a requestor that will try each requestor in
 // 'requestor_array', one at a time, until it finds a successful one. A fallback
 // is just a throttled race.
 
-    return race(requestor_array, milliseconds, 1);
+    return race(requestor_array, time_limit, 1);
 };
 parseq.parallel = parallel;
 parseq.parallel_object = function parallel_object(
     required_object,
     optional_object,
-    milliseconds,
+    time_limit,
     time_option,
     throttle
 ) {
@@ -529,7 +529,7 @@ parseq.parallel_object = function parallel_object(
     const parallel_requestor = parallel(
         required_array,
         optional_array,
-        milliseconds,
+        time_limit,
         time_option,
         throttle,
         "parallel_object"
@@ -561,7 +561,7 @@ parseq.parallel_object = function parallel_object(
     };
 };
 parseq.race = race;
-parseq.sequence = function sequence(requestor_array, milliseconds) {
+parseq.sequence = function sequence(requestor_array, time_limit) {
 
 // A sequence runs each requestor in order, passing results to the next,
 // as long as they are all successful. A sequence is a throttled parallel.
@@ -569,7 +569,7 @@ parseq.sequence = function sequence(requestor_array, milliseconds) {
     return parallel(
         requestor_array,
         undefined,
-        milliseconds,
+        time_limit,
         undefined,
         1,
         "sequence"
