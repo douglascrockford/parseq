@@ -231,7 +231,7 @@ function parallel(
     required_array,
     optional_array,
     milliseconds,
-    option,
+    time_option,
     throttle,
     factory_name = "parallel"
 ) {
@@ -262,7 +262,7 @@ function parallel(
 // If there is only 'optional_array', then it is the 'requestor_array'.
 
         requestor_array = optional_array;
-        option = true;
+        time_option = true;
     } else {
 
 // If there is only 'required_array', then it is the 'requestor_array'.
@@ -270,14 +270,18 @@ function parallel(
         number_of_required = required_array.length;
         if (optional_array === undefined || optional_array.length === 0) {
             requestor_array = required_array;
-            option = undefined;
+            time_option = undefined;
 
 // If both arrays are provided, we concatenate them together.
 
         } else {
             requestor_array = required_array.concat(optional_array);
-            if (option !== undefined && typeof option !== "boolean") {
-                throw make_reason(factory_name, "Bad option.", option);
+            if (time_option !== undefined && typeof time_option !== "boolean") {
+                throw make_reason(
+                    factory_name,
+                    "Bad time_option.",
+                    time_option
+                );
             }
         }
     }
@@ -320,12 +324,12 @@ function parallel(
                 }
 
 // If all have been processed, or if the requireds have all succeeded and we
-// do not have an 'option', then we are done.
+// do not have an 'time_option', then we are done.
 
                 if (
                     number_of_pending < 1
                     || (
-                        option === undefined
+                        time_option === undefined
                         && number_of_pending_required < 1
                     )
                 ) {
@@ -340,18 +344,18 @@ function parallel(
             },
             function parallel_timeout() {
 
-// When the timer fires, work stops unless we were under the 'false' option.
-// The 'false' option puts no time limits on the requireds, allowing the
-// optionals to run until the requireds finish or the the time expires,
-// whichever happens last.
+// When the timer fires, work stops unless we were under the 'false'
+// time_option. The 'false' time_option puts no time limits on the
+// requireds, allowing the optionals to run until the requireds finish
+// or the the time expires, whichever happens last.
 
                 const reason = make_reason(
                     factory_name,
                     "Timeout.",
                     milliseconds
                 );
-                if (option === false) {
-                    option = undefined;
+                if (time_option === false) {
+                    time_option = undefined;
                     if (number_of_pending_required < 1) {
                         cancel(reason);
                         callback(results);
@@ -444,7 +448,7 @@ parseq.parallel_object = function parallel_object(
     required_object,
     optional_object,
     milliseconds,
-    option,
+    time_option,
     throttle
 ) {
 
@@ -526,7 +530,7 @@ parseq.parallel_object = function parallel_object(
         required_array,
         optional_array,
         milliseconds,
-        option,
+        time_option,
         throttle,
         "parallel_object"
     );

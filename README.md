@@ -14,15 +14,37 @@ Parseq is in the Public Domain.
 
 A factory function is any function that returns a requestor function. Parseq provides these factory functions:
 
-    parseq.fallback(requestor_array, milliseconds)
+    parseq.fallback(
+        requestor_array,
+        milliseconds
+    )
 
-    parseq.parallel(required_array, optional_array, milliseconds, option, throttle)
+    parseq.parallel(
+        required_array,
+        optional_array,
+        milliseconds,
+        time_option,
+        throttle
+    )
 
-    parseq.parallel_object(required_object, optional_object, milliseconds, option, throttle)
+    parseq.parallel_object(
+        required_object,
+        optional_object,
+        milliseconds,
+        time_option,
+        throttle
+    )
 
-    parseq.race(requestor_array, milliseconds, throttle)
+    parseq.race(
+        requestor_array,
+        milliseconds,
+        throttle
+    )
 
-    parseq.sequence(requestor_array, milliseconds)
+    parseq.sequence(
+        requestor_array,
+        milliseconds
+    )
 
 Each of these factories (except for `parallel_object`) takes an array of requestor  functions. The `parallel` factory can take two arrays of requestor functions.
 
@@ -67,7 +89,10 @@ Three of the factories (`parallel`, `parallel_object`, and `race`) can take a `t
 
 ## Fallback
 
-    parseq.fallback(requestor_array, milliseconds)
+    parseq.fallback(
+        requestor_array,
+        milliseconds
+    )
 
 `parseq.fallback` returns a requestor function. When the requestor is called, it will call the first requestor in `requestor_array`. If that is ultimately successful, its value will be passed to the callback. But if that requestor fails, the next requestor will be called, and so on. If none of the requestors is successful, then the fallback fails. If any succeeds, then the fallback succeeds.
 
@@ -77,7 +102,13 @@ The fallback requestor will return a cancel function that can be called when the
 
 ## Parallel
 
-    parseq.parallel(required_array, optional_array, milliseconds, option, throttle)
+    parseq.parallel(
+        required_array,
+        optional_array,
+        milliseconds,
+        time_option,
+        throttle
+    )
 
 `parseq.parallel` returns a requestor that processes many requestors in parallel, producing an array of all of the successful results. It does not add parallelism to JavaScript. It makes it possible for JavaScript to exploit the natural parallelism of the universe.
 
@@ -89,9 +120,9 @@ If the `milliseconds` argument is supplied, then a time limit is imposed. The re
 
 If there is no time limit, and if there are required requestors, then the parallel operation is finished when all of the required requestors are done. All unfinished optional requestors will be cancelled.
 
-The `option` parameter works when there are both required requestors and optional requestors.  It can have one of three values:
+The `time_option` parameter works when there are both required requestors and optional requestors.  It can have one of three values:
 
-|`option` | Effect
+|`time_option` | Effect
 -------- | ------
 |`undefined` | The optional requestors must finish before the required requestors finish. The required requestors must finish before the time limit, if there is one.
 |`true` | The required requestors and the optional requestors must all finish before the time limit.
@@ -101,13 +132,23 @@ If `throttle` is not `undefined` or `0`, then there will be a limit on the numbe
 
 ## Parallel Object
 
-    parseq.parallel_object(required_object, optional_object, milliseconds, option, throttle)
+    parseq.parallel_object(
+        required_object,
+        optional_object,
+        milliseconds,
+        time_option,
+        throttle
+    )
 
 `parseq.parallel_object` is like `parseq.parallel` except that it operates on objects of requestors instead of on arrays of requestors. If successful, it will deliver an object of results. A key from an object of requestors will be used as the key for the requestor's result.
 
 ## Race
 
-    parseq.race(requestor_array, milliseconds, throttle)
+    parseq.race(
+        requestor_array,
+        milliseconds,
+        throttle
+    )
 
 `parseq.race` returns a requestor that starts all of the requestors in `requestor_array` in parallel. Its result is the result of the first of those requestors to successfully finish. All of the other requestors will be cancelled. If all of those requestors fail, then the race fails.
 
@@ -117,7 +158,10 @@ If `throttle` is not `undefined` or `0`, then there will be a limit on the numbe
 
 ## Sequence
 
-    parseq.sequence(requestor_array, milliseconds)
+    parseq.sequence(
+        requestor_array,
+        milliseconds
+    )
 
 `parseq.sequence` returns a requestor that processes each requestor in `requestor_array` one at a time. Each of those requestors will be passed the result of the previous requestor as its `value` argument. If all succeed, then the sequence succeeds, giving the result of the last of the requestors. If any fail, then the sequence fails.
 
