@@ -1,13 +1,18 @@
 // parseq.js
+// Douglas Crockford
+// 2018-07-31
 
 // Better living through sporadicity!
+
+// You can access the parseq object in your module by importing it.
+//      import parseq from "./parseq.js";
 
 /*jslint node */
 
 /*property
-    concat, create, evidence, fallback, forEach, freeze, isArray, isSafeInteger,
-    keys, length, min, parallel, parallel_object, pop, push, race, sequence,
-    some
+    concat, create, evidence, fallback, forEach, freeze, isArray,
+    isSafeInteger, keys, length, min, parallel, parallel_object, pop,
+    push, race, sequence, some
 */
 
 function make_reason(factory_name, excuse, evidence) {
@@ -16,31 +21,24 @@ function make_reason(factory_name, excuse, evidence) {
 // They are made from Error objects for throwability.
 
     const reason = new Error("parseq." + factory_name + (
-        (excuse === undefined)
-            ? ""
-            : ": " + excuse
+        excuse === undefined
+        ? ""
+        : ": " + excuse
     ));
     reason.evidence = evidence;
     return reason;
 }
 
-function is_callback(callback) {
-
-// A 'callback' function takes two arguments, 'value' and 'reason'.
-
-    return typeof callback === "function" && callback.length === 2;
-}
-
 function check_callback(callback, factory_name) {
-    if (!is_callback(callback)) {
+    if (typeof callback !== "function" || callback.length !== 2) {
         throw make_reason(factory_name, "Not a callback.", callback);
     }
 }
 
 function check_requestor_array(requestor_array, factory_name) {
 
-// A requestor array contains only requestors. A requestor is a function
-// that takes one or two arguments: 'callback' and optionally 'initial_value'.
+// A requestor array contains only requestors. A requestor is a function that
+// takes wun or two arguments: 'callback' and optionally 'initial_value'.
 
     if (
         !Array.isArray(requestor_array)
@@ -77,8 +75,8 @@ function run(
 // milliseconds, and a throttle.
 
 // If all goes well we will be calling all of the requestor functions in the
-// array. Each of them  might return a cancel function that will be kept in
-// the 'cancel_array'.
+// array. Each of them  might return a cancel function that will be kept in the
+// 'cancel_array'.
 
     let cancel_array = new Array(requestor_array.length);
     let next_number = 0;
@@ -161,14 +159,14 @@ function run(
 
                             number = undefined;
 
-// If there are any requestors that are still waiting to start, then start the
-// next one. If the next requestor is in a sequence, then it will get the most
-// recent 'value'. The others get the 'initial_value'.
+// If there are any requestors that are still waiting to start, then
+// start the next wun. If the next requestor is in a sequence, then it
+// will get the most recent 'value'. The others get the 'initial_value'.
 
                             return start_requestor(
-                                (factory_name === "sequence")
-                                    ? value
-                                    : initial_value
+                                factory_name === "sequence"
+                                ? value
+                                : initial_value
                             );
                         }
                     },
@@ -176,7 +174,7 @@ function run(
                 );
 
 // Requestors are required to report their failure through the callback.
-// They are not allowed to throw exceptions. If we happen to catch one,
+// They are not allowed to throw exceptions. If we happen to catch wun,
 // it will be treated as a failure.
 
             } catch (exception) {
@@ -187,8 +185,8 @@ function run(
         }
     }
 
-// With the 'cancel' and the 'start_requestor' functions in hand, we can now
-// get to work.
+// With the 'cancel' and the 'start_requestor' functions in hand,
+// we can now get to work.
 
 // If a timeout was requested, start the timer.
 
@@ -208,7 +206,7 @@ function run(
 // each requestor finishes, another will be started.
 
 // The 'sequence' and 'fallback' factories set 'throttle' to 1 because they
-// process one at a time and will always start another requestor when the
+// process wun at a time and will always start another requestor when the
 // previous requestor finishes.
 
     if (!Number.isSafeInteger(throttle) || throttle < 0) {
@@ -243,8 +241,8 @@ function parallel(
     let number_of_required;
     let requestor_array;
 
-// There are four cases because 'required_array' and 'optional_array' can both
-// be empty.
+// There are four cases because 'required_array' and 'optional_array'
+// can both be empty.
 
     if (required_array === undefined || required_array.length === 0) {
         number_of_required = 0;
@@ -309,7 +307,7 @@ function parallel(
                 results[number] = value;
                 number_of_pending -= 1;
 
-// If the requestor was one of the requireds, make sure it was successful.
+// If the requestor was wun of the requireds, make sure it was successful.
 // If it failed, then the parallel operation fails. If an optionals requestor
 // fails, we can still continue.
 
@@ -323,8 +321,8 @@ function parallel(
                     }
                 }
 
-// If all have been processed, or if the requireds have all succeeded and we
-// do not have an 'time_option', then we are done.
+// If all have been processed, or if the requireds have all succeeded
+// and we do not have an 'time_option', then we are done.
 
                 if (
                     number_of_pending < 1
@@ -335,9 +333,9 @@ function parallel(
                 ) {
                     cancel(make_reason(factory_name, "Optional."));
                     callback(
-                        (factory_name === "sequence")
-                            ? results.pop()
-                            : results
+                        factory_name === "sequence"
+                        ? results.pop()
+                        : results
                     );
                     callback = undefined;
                 }
@@ -347,7 +345,7 @@ function parallel(
 // When the timer fires, work stops unless we were under the 'false'
 // time_option. The 'false' time_option puts no time limits on the
 // requireds, allowing the optionals to run until the requireds finish
-// or the the time expires, whichever happens last.
+// or the time expires, whichever happens last.
 
                 const reason = make_reason(
                     factory_name,
@@ -381,70 +379,7 @@ function parallel(
     };
 }
 
-function race(requestor_array, time_limit, throttle) {
-
-// The race factory returns a requestor that starts all of the requestors in
-// requestor_array at once. The first success wins.
-
-    const factory_name = (throttle === 1)
-        ? "fallback"
-        : "race";
-
-    check_requestor_array(requestor_array, factory_name);
-    return function race_requestor(callback, initial_value) {
-        check_callback(callback, factory_name);
-        let number_of_pending = requestor_array.length;
-        let cancel = run(
-            factory_name,
-            requestor_array,
-            initial_value,
-            function race_action(value, reason, number) {
-                number_of_pending -= 1;
-
-// We have a winner. Cancel the losers and pass the value to the callback.
-
-                if (value !== undefined) {
-                    cancel(make_reason(factory_name, "Loser.", number));
-                    callback(value);
-                    callback = undefined;
-                }
-
-// There was no winner. Signal a failure.
-
-                if (number_of_pending < 1) {
-                    cancel(reason);
-                    callback(undefined, reason);
-                    callback = undefined;
-                }
-            },
-            function race_timeout() {
-                let reason = make_reason(
-                    factory_name,
-                    "Timeout.",
-                    time_limit
-                );
-                cancel(reason);
-                callback(undefined, reason);
-                callback = undefined;
-            },
-            time_limit,
-            throttle
-        );
-        return cancel;
-    };
-}
-
-const parseq = Object.create(null);
-parseq.fallback = function fallback(requestor_array, time_limit) {
-
-// The fallback factory will return a requestor that will try each requestor in
-// 'requestor_array', one at a time, until it finds a successful one. A fallback
-// is just a throttled race.
-
-    return race(requestor_array, time_limit, 1);
-};
-parseq.parallel = parallel;
-parseq.parallel_object = function parallel_object(
+function parallel_object(
     required_object,
     optional_object,
     time_limit,
@@ -452,10 +387,10 @@ parseq.parallel_object = function parallel_object(
     throttle
 ) {
 
-// 'parallel_object' is similar to 'parallel' except that it takes and produces
-// objects of requestors instead of arrays of requestors. This factory converts
-// the objects to arrays, and the requestor it returns turns them back again.
-// It lets 'parallel' do most of the work.
+// 'parallel_object' is similar to 'parallel' except that it takes and
+// produces objects of requestors instead of arrays of requestors. This
+// factory converts the objects to arrays, and the requestor it returns
+// turns them back again. It lets 'parallel' do most of the work.
 
     const names = [];
     let required_array = [];
@@ -559,9 +494,72 @@ parseq.parallel_object = function parallel_object(
             initial_value
         );
     };
-};
-parseq.race = race;
-parseq.sequence = function sequence(requestor_array, time_limit) {
+}
+
+function race(requestor_array, time_limit, throttle) {
+
+// The race factory returns a requestor that starts all of the
+// requestors in requestor_array at once. The first success wins.
+
+    const factory_name = (
+        throttle === 1
+        ? "fallback"
+        : "race"
+    );
+
+    check_requestor_array(requestor_array, factory_name);
+    return function race_requestor(callback, initial_value) {
+        check_callback(callback, factory_name);
+        let number_of_pending = requestor_array.length;
+        let cancel = run(
+            factory_name,
+            requestor_array,
+            initial_value,
+            function race_action(value, reason, number) {
+                number_of_pending -= 1;
+
+// We have a winner. Cancel the losers and pass the value to the callback.
+
+                if (value !== undefined) {
+                    cancel(make_reason(factory_name, "Loser.", number));
+                    callback(value);
+                    callback = undefined;
+                }
+
+// There was no winner. Signal a failure.
+
+                if (number_of_pending < 1) {
+                    cancel(reason);
+                    callback(undefined, reason);
+                    callback = undefined;
+                }
+            },
+            function race_timeout() {
+                let reason = make_reason(
+                    factory_name,
+                    "Timeout.",
+                    time_limit
+                );
+                cancel(reason);
+                callback(undefined, reason);
+                callback = undefined;
+            },
+            time_limit,
+            throttle
+        );
+        return cancel;
+    };
+}
+
+function fallback(requestor_array, time_limit) {
+
+// The fallback factory will return a requestor that will try each requestor
+// in 'requestor_array', wun at a time, until it finds a successful wun.
+
+    return race(requestor_array, time_limit, 1);
+}
+
+function sequence(requestor_array, time_limit) {
 
 // A sequence runs each requestor in order, passing results to the next,
 // as long as they are all successful. A sequence is a throttled parallel.
@@ -575,5 +573,12 @@ parseq.sequence = function sequence(requestor_array, time_limit) {
         "sequence"
     );
 
-};
-export default Object.freeze(parseq);
+}
+
+export default Object.freeze({
+    fallback,
+    parallel,
+    parallel_object,
+    race,
+    sequence
+});
