@@ -24,9 +24,11 @@ document.getElementById("reset").onclick = function (ignore) {
 
 function widget(name) {
     return function widget_requestor(callback, value) {
-        let result = (value !== undefined)
+        let result = (
+            value !== undefined
             ? value + ">" + name
-            : name;
+            : name
+        );
         let demo = document.getElementById("demo");
         let fieldset = document.createElement("fieldset");
         let legend = document.createElement("legend");

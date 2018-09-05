@@ -1,8 +1,8 @@
 // parseq.js
 // Douglas Crockford
-// 2018-07-31
+// 2018-09-05
 
-// Better living through sporadicity!
+// Better living thru immediacy!
 
 // You can access the parseq object in your module by importing it.
 //      import parseq from "./parseq.js";
@@ -10,9 +10,9 @@
 /*jslint node */
 
 /*property
-    concat, create, evidence, fallback, forEach, freeze, isArray,
-    isSafeInteger, keys, length, min, parallel, parallel_object, pop,
-    push, race, sequence, some
+    concat, create, evidence, fallback, forEach, freeze, isArray, isSafeInteger,
+    keys, length, min, parallel, parallel_object, pop, push, race, sequence,
+    some
 */
 
 function make_reason(factory_name, excuse, evidence) {
@@ -140,7 +140,7 @@ function run(
 // This callback function is called by the 'requestor' when it is done.
 // If we are no longer running, then this call will be ignored.
 // For example, it might be a result that is sent back after the time
-// limit has expired. This callback function can only be called once.
+// limit has expired. This callback function can only be called wunce.
 
                         if (
                             cancel_array !== undefined
@@ -173,7 +173,7 @@ function run(
                     value
                 );
 
-// Requestors are required to report their failure through the callback.
+// Requestors are required to report their failure thru the callback.
 // They are not allowed to throw exceptions. If we happen to catch wun,
 // it will be treated as a failure.
 
@@ -201,7 +201,7 @@ function run(
     }
 
 // If we are doing 'race' or 'parallel', we want to start all of the requestors
-// at once. However, if there is an effective 'throttle' in place then we can
+// at wunce. However, if there is an effective 'throttle' in place then we can
 // not start them all. We will start as many as 'throttle' allows, and then as
 // each requestor finishes, another will be started.
 
@@ -223,7 +223,7 @@ function run(
     return cancel;
 }
 
-// The factories: --------------------------------------------------------------
+// The factories ///////////////////////////////////////////////////////////////
 
 function parallel(
     required_array,
@@ -499,7 +499,7 @@ function parallel_object(
 function race(requestor_array, time_limit, throttle) {
 
 // The race factory returns a requestor that starts all of the
-// requestors in requestor_array at once. The first success wins.
+// requestors in requestor_array at wunce. The first success wins.
 
     const factory_name = (
         throttle === 1
