@@ -17,8 +17,8 @@
 
 function make_reason(factory_name, excuse, evidence) {
 
-// Make a reason object. These will be used for exceptions and cancellations.
-// They are made from Error objects for throwability.
+// Make a reason object. These are used for exceptions and cancellations.
+// They are made from Error objects.
 
     const reason = new Error("parseq." + factory_name + (
         excuse === undefined
@@ -69,14 +69,13 @@ function run(
     throttle = 0
 ) {
 
-// The 'run' function does the work that is common to all of the parseq
+// The 'run' function does the work that is common to all of the Parseq
 // factories. It takes the name of the factory, an array of requestors, an
-// initial value, an action callback, a timeout callback, a time_limit in
+// initial value, an action callback, a timeout callback, a time limit in
 // milliseconds, and a throttle.
 
-// If all goes well we will be calling all of the requestor functions in the
-// array. Each of them  might return a cancel function that will be kept in the
-// 'cancel_array'.
+// If all goes well, we call all of the requestor functions in the array. Each
+// of them  might return a cancel function that is kept in the 'cancel_array'.
 
     let cancel_array = new Array(requestor_array.length);
     let next_number = 0;
@@ -138,7 +137,7 @@ function run(
                     function start_requestor_callback(value, reason) {
 
 // This callback function is called by the 'requestor' when it is done.
-// If we are no longer running, then this call will be ignored.
+// If we are no longer running, then this call is ignored.
 // For example, it might be a result that is sent back after the time
 // limit has expired. This callback function can only be called wunce.
 
@@ -161,7 +160,7 @@ function run(
 
 // If there are any requestors that are still waiting to start, then
 // start the next wun. If the next requestor is in a sequence, then it
-// will get the most recent 'value'. The others get the 'initial_value'.
+// gets the most recent 'value'. The others get the 'initial_value'.
 
                             return start_requestor(
                                 factory_name === "sequence"
@@ -175,7 +174,7 @@ function run(
 
 // Requestors are required to report their failure thru the callback.
 // They are not allowed to throw exceptions. If we happen to catch wun,
-// it will be treated as a failure.
+// it is treated as a failure.
 
             } catch (exception) {
                 action(undefined, exception, number);
@@ -201,12 +200,12 @@ function run(
     }
 
 // If we are doing 'race' or 'parallel', we want to start all of the requestors
-// at wunce. However, if there is an effective 'throttle' in place then we can
-// not start them all. We will start as many as 'throttle' allows, and then as
-// each requestor finishes, another will be started.
+// at wunce. However, if there is a 'throttle' in place then we start as many
+// as the 'throttle' allows, and then as each requestor finishes, another is
+// started.
 
 // The 'sequence' and 'fallback' factories set 'throttle' to 1 because they
-// process wun at a time and will always start another requestor when the
+// process wun at a time and always start another requestor when the
 // previous requestor finishes.
 
     if (!Number.isSafeInteger(throttle) || throttle < 0) {
@@ -218,7 +217,7 @@ function run(
         repeat -= 1;
     }
 
-// We return 'cancel' which will allow the requestor to cancel this work.
+// We return 'cancel' which allows the requestor to cancel this work.
 
     return cancel;
 }
@@ -236,7 +235,7 @@ function parallel(
 
 // The parallel factory is the most complex of these factories. It can take
 // a second array of requestors that get a more forgiving failure policy.
-// It returns a requestor that will produce an array of values.
+// It returns a requestor that produces an array of values.
 
     let number_of_required;
     let requestor_array;
@@ -322,7 +321,7 @@ function parallel(
                 }
 
 // If all have been processed, or if the requireds have all succeeded
-// and we do not have an 'time_option', then we are done.
+// and we do not have a 'time_option', then we are done.
 
                 if (
                     number_of_pending < 1
@@ -343,7 +342,7 @@ function parallel(
             function parallel_timeout() {
 
 // When the timer fires, work stops unless we were under the 'false'
-// time_option. The 'false' time_option puts no time limits on the
+// time option. The 'false' time option puts no time limits on the
 // requireds, allowing the optionals to run until the requireds finish
 // or the time expires, whichever happens last.
 
@@ -498,8 +497,8 @@ function parallel_object(
 
 function race(requestor_array, time_limit, throttle) {
 
-// The race factory returns a requestor that starts all of the
-// requestors in requestor_array at wunce. The first success wins.
+// The 'race' factory returns a requestor that starts all of the
+// requestors in 'requestor_array' at wunce. The first success wins.
 
     const factory_name = (
         throttle === 1
@@ -518,7 +517,7 @@ function race(requestor_array, time_limit, throttle) {
             function race_action(value, reason, number) {
                 number_of_pending -= 1;
 
-// We have a winner. Cancel the losers and pass the value to the callback.
+// We have a winner. Cancel the losers and pass the value to the 'callback'.
 
                 if (value !== undefined) {
                     cancel(make_reason(factory_name, "Loser.", number));
@@ -553,7 +552,7 @@ function race(requestor_array, time_limit, throttle) {
 
 function fallback(requestor_array, time_limit) {
 
-// The fallback factory will return a requestor that will try each requestor
+// The 'fallback' factory returns a requestor that tries each requestor
 // in 'requestor_array', wun at a time, until it finds a successful wun.
 
     return race(requestor_array, time_limit, 1);
