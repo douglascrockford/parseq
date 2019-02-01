@@ -97,47 +97,47 @@ parseq.parallel(
     [
         widget("A"),
         parseq.race([
+            widget("Race B0"),
             widget("Race B1"),
-            widget("Race B2"),
-            widget("Race B3")
+            widget("Race B2")
         ]),
         parseq.sequence([
+            widget("Seq C0"),
             widget("Seq C1"),
-            widget("Seq C2"),
-            widget("Seq C3")
+            widget("Seq C2")
         ]),
         parseq.sequence([
+            widget("Seq D0"),
             widget("Seq D1"),
-            widget("Seq D2"),
-            widget("Seq D3")
+            widget("Seq D2")
         ]),
         parseq.fallback([
+            widget("Fall F0"),
             widget("Fall F1"),
-            widget("Fall F2"),
-            widget("Fall F3")
+            widget("Fall F2")
         ])
     ],
     [
         widget("Opt Q"),
         parseq.race([
+            widget("Opt Race R0"),
             widget("Opt Race R1"),
-            widget("Opt Race R2"),
-            widget("Opt Race R3")
+            widget("Opt Race R2")
         ]),
         parseq.sequence([
+            widget("Opt Seq S0"),
             widget("Opt Seq S1"),
-            widget("Opt Seq S2"),
-            widget("Opt Seq S3")
+            widget("Opt Seq S2")
         ]),
         parseq.sequence([
+            widget("Opt Seq T0"),
             widget("Opt Seq T1"),
-            widget("Opt Seq T2"),
-            widget("Opt Seq T3")
+            widget("Opt Seq T2")
         ]),
         parseq.fallback([
+            widget("Opt Fall V0"),
             widget("Opt Fall V1"),
-            widget("Opt Fall V2"),
-            widget("Opt Fall V3")
+            widget("Opt Fall V2")
         ])
     ]
 )(show);
