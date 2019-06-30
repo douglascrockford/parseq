@@ -2,9 +2,9 @@
 
 // This is used by demo.html to demonstrate parseq.js. It includes a widget
 // function that represents a service factory, a show callback that displays the
-// final result, and an parseq routine written as an annotated nested array.
+// final result, and a parseq routine written as an annotated nested array.
 
-// This interacts with the browser with Plain Old DOM.
+// This interacts with the browser using Plain Old DOM.
 
 /*jslint
     browser
@@ -66,13 +66,13 @@ function widget(name) {
 }
 
 function show(value, reason) {
-    let result;
-    let title;
-    let color;
     let body;
+    let color;
     let demo = document.getElementById("demo");
     let fieldset = document.createElement("fieldset");
     let legend = document.createElement("legend");
+    let result;
+    let title;
     if (value !== undefined) {
         result = JSON.stringify(value);
         title = "success";
