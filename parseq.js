@@ -1,6 +1,6 @@
 // parseq.js
 // Douglas Crockford
-// 2018-09-05
+// 2020-08-08
 
 // Better living thru eventuality!
 
@@ -29,28 +29,34 @@ function make_reason(factory_name, excuse, evidence) {
     return reason;
 }
 
+function get_array_length(array, factory_name) {
+    if (Array.isArray(array)) {
+        return array.length;
+    }
+    if (array === undefined) {
+        return 0;
+    }
+    throw make_reason(factory_name, "Not an array.", array);
+}
+
 function check_callback(callback, factory_name) {
     if (typeof callback !== "function" || callback.length !== 2) {
-        throw make_reason(factory_name, "Not a callback.", callback);
+        throw make_reason(factory_name, "Not a callback function.", callback);
     }
 }
 
-function check_requestor_array(requestor_array, factory_name) {
+function check_requestors(requestor_array, factory_name) {
 
 // A requestor array contains only requestors. A requestor is a function that
 // takes wun or two arguments: 'callback' and optionally 'initial_value'.
 
-    if (
-        !Array.isArray(requestor_array)
-        || requestor_array.length < 1
-        || requestor_array.some(function (requestor) {
+    if (requestor_array.some(function (requestor) {
             return (
                 typeof requestor !== "function"
                 || requestor.length < 1
                 || requestor.length > 2
             );
-        })
-    ) {
+    })) {
         throw make_reason(
             factory_name,
             "Bad requestors array.",
@@ -237,35 +243,30 @@ function parallel(
 // a second array of requestors that get a more forgiving failure policy.
 // It returns a requestor that produces an array of values.
 
-    let number_of_required;
     let requestor_array;
 
 // There are four cases because 'required_array' and 'optional_array'
 // can both be empty.
 
-    if (required_array === undefined || required_array.length === 0) {
-        number_of_required = 0;
-        if (optional_array === undefined || optional_array.length === 0) {
+    let number_of_required = get_array_length(required_array, factory_name);
+    if (number_of_required === 0) {
+        if (get_array_length(optional_array, factory_name) === 0) {
 
-// If both are empty, then there is probably a mistake.
+// If both are empty, then 'requestor_array' is empty.
 
-            throw make_reason(
-                factory_name,
-                "Missing requestor array.",
-                required_array
-            );
-        }
+            requestor_array = [];
+        } else {
 
 // If there is only 'optional_array', then it is the 'requestor_array'.
 
-        requestor_array = optional_array;
-        time_option = true;
+            requestor_array = optional_array;
+            time_option = true;
+        }
     } else {
 
 // If there is only 'required_array', then it is the 'requestor_array'.
 
-        number_of_required = required_array.length;
-        if (optional_array === undefined || optional_array.length === 0) {
+        if (get_array_length(optional_array, factory_name) === 0) {
             requestor_array = required_array;
             time_option = undefined;
 
@@ -285,12 +286,20 @@ function parallel(
 
 // We check the array and return the requestor.
 
-    check_requestor_array(requestor_array, factory_name);
+    check_requestors(requestor_array, factory_name);
     return function parallel_requestor(callback, initial_value) {
         check_callback(callback, factory_name);
         let number_of_pending = requestor_array.length;
         let number_of_pending_required = number_of_required;
         let results = [];
+        if (number_of_pending === 0) {
+            callback(
+                factory_name === "sequence"
+                ? initial_value
+                : results
+            );
+            return;
+        }
 
 // 'run' gets it started.
 
@@ -448,17 +457,7 @@ function parallel_object(
         });
     }
 
-// Make sure that we harvested something.
-
-    if (names.length === 0) {
-        return make_reason(
-            "parallel_object",
-            "No requestors.",
-            required_object
-        );
-    }
-
-// Call parallel to get a requestor.
+// Call 'parallel' to get a requestor.
 
     const parallel_requestor = parallel(
         required_array,
@@ -506,7 +505,10 @@ function race(requestor_array, time_limit, throttle) {
         : "race"
     );
 
-    check_requestor_array(requestor_array, factory_name);
+    if (get_array_length(requestor_array, factory_name) === 0) {
+        throw make_reason(factory_name, "No requestors.");
+    }
+    check_requestors(requestor_array, factory_name);
     return function race_requestor(callback, initial_value) {
         check_callback(callback, factory_name);
         let number_of_pending = requestor_array.length;
