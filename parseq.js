@@ -1,6 +1,6 @@
 // parseq.js
 // Douglas Crockford
-// 2020-08-08
+// 2020-10-25
 
 // Better living thru eventuality!
 
@@ -518,18 +518,17 @@ function race(requestor_array, time_limit, throttle) {
             initial_value,
             function race_action(value, reason, number) {
                 number_of_pending -= 1;
+                if (value !== undefined) {
 
 // We have a winner. Cancel the losers and pass the value to the 'callback'.
 
-                if (value !== undefined) {
                     cancel(make_reason(factory_name, "Loser.", number));
                     callback(value);
                     callback = undefined;
-                }
+                } else if (number_of_pending < 1) {
 
 // There was no winner. Signal a failure.
 
-                if (number_of_pending < 1) {
                     cancel(reason);
                     callback(undefined, reason);
                     callback = undefined;
