@@ -1,6 +1,6 @@
 // parseq.js
 // Douglas Crockford
-// 2020-10-25
+// 2020-11-09
 
 // Better living thru eventuality!
 
@@ -168,11 +168,11 @@ function run(
 // start the next wun. If the next requestor is in a sequence, then it
 // gets the most recent 'value'. The others get the 'initial_value'.
 
-                            return start_requestor(
+                            setTimeout(start_requestor, 0, (
                                 factory_name === "sequence"
                                 ? value
                                 : initial_value
-                            );
+                            ));
                         }
                     },
                     value
