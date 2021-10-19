@@ -51,11 +51,11 @@ function check_requestors(requestor_array, factory_name) {
 // takes wun or two arguments: 'callback' and optionally 'initial_value'.
 
     if (requestor_array.some(function (requestor) {
-            return (
-                typeof requestor !== "function"
-                || requestor.length < 1
-                || requestor.length > 2
-            );
+        return (
+            typeof requestor !== "function"
+            || requestor.length < 1
+            || requestor.length > 2
+        );
     })) {
         throw make_reason(
             factory_name,
