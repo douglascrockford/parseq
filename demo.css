@@ -3,38 +3,17 @@
 body {
     background-color: lightblue;
     font-family: Programma, monospace;
-}
-
-h1 {
-    text-align: center;
-}
-
-#reset {
-    background-color: aliceblue;
-    border: 2pt solid navy;
-    border-radius: 0.5em;
-    cursor: pointer;
-    padding-left: 1em;
-    padding-right: 1em;
-    text-align: center;
-}
-
-#reset:hover {
-    background-color: beige;
-}
-
-#reset:active {
-    background-color: mistyrose;
+    font-size: 150%;
+    transition: background-color 1s;
 }
 
 fieldset {
     background-color: aliceblue;
     border: 2px solid navy;
     border-radius: 0.5em;
-    float: left;
-    font-size: 125%;
+    display: block;
     margin: 0.25em;
-    text-align: center;
+    width: stretch;
 }
 
 legend {
@@ -42,26 +21,33 @@ legend {
     border: 2px solid navy;
     border-radius: 0.5em;
     cursor: default;
-    font-size: 125%;
     padding-left: 0.5em;
     padding-right: 0.5em;
+    text-align: center;
 }
 
-fieldset:hover, legend:hover {
-    background-color: papayawhip;
+legend:hover {
+    background-color: powderblue;
 }
 
-input {
-    border: 2px solid black;
+legend:active {
+    background-color: red;
+}
+
+span {
+    border: 2pt solid black;
+    margin: 1em;
+    padding-left: 0.5em;
+}
+
+tt {
     cursor: pointer;
 }
 
-input[value="success"]:hover {
+tt.success:hover {
     background-color: lightgreen;
-    border: 2px solid green;
 }
 
-input[value="failure"]:hover {
+tt.failure:hover {
     background-color: pink;
-    border: 2px solid red;
 }

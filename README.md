@@ -19,19 +19,15 @@ A factory function is any function that returns a requestor function. Parseq pro
         time_limit
     )
 
-    parseq.parallel(
-        required_array,
-        optional_array,
+    parseq.par_all(
+        requestor_array,
         time_limit,
-        time_option,
         throttle
     )
 
-    parseq.parallel_object(
-        required_object,
-        optional_object,
+    parseq.par_any(
+        requestor_array,
         time_limit,
-        time_option,
         throttle
     )
 
@@ -46,7 +42,7 @@ A factory function is any function that returns a requestor function. Parseq pro
         time_limit
     )
 
-Each of these factories (except for `parallel_object`) takes an array of requestor functions. The `parallel` factory can take two arrays of requestor functions.
+Each of these factories takes an array of requestor functions.
 
 Each of these factory functions returns a requestor function. A factory function may throw an exception if it finds problems in its parameters.
 
@@ -84,7 +80,7 @@ A cancel function attempts to stop the operation of the requestor. If a program 
 
 All of the factories can take a `time_limit` expressed in milliseconds. The requestor that the factory returns will fail if it can not finish its work in the specified time. If `time_limit` is `0` or `undefined`, then there will be no time limit.
 
-Three of the factories (`parallel`, `parallel_object`, and `race`) can take a `throttle` argument. Normally these factories want to start all of their requestors at once. Unfortunately, that can cause some incompetent systems to fail due to resource exhaustion or other limitations. The `throttle` puts an upper limit on the number of requestors that can be running at once. Please be aware that some of your requestors might not start running until others have finished. You need to factor that delay into your time limits.
+Three of the factories (`par_all`, `par+any`, and `race`) can take a `throttle` argument. Normally these factories want to start all of their requestors at once. Unfortunately, that can cause some incompetent systems to fail due to resource exhaustion or other limitations. The `throttle` puts an upper limit on the number of requestors that can be running at once. Please be aware that some of your requestors might not start running until others have finished. You need to factor that delay into your time limits.
 
 
 ## Fallback
@@ -100,47 +96,37 @@ If `time_limit` is `0` or `undefined`, then there is no time limit. If `time_lim
 
 The fallback requestor will return a cancel function that can be called when the result is no longer needed.
 
-## Parallel
+## Par_all
 
-    parseq.parallel(
-        required_array,
-        optional_array,
+    parseq.par_all(
+        requestor_array,
         time_limit,
-        time_option,
         throttle
     )
 
-`parseq.parallel` returns a requestor that processes many requestors in parallel, producing an array of all of the successful results. It does not add parallelism to JavaScript. It makes it possible for JavaScript to exploit the natural parallelism of the universe.
-
-`parseq.parallel` can take two arrays of requestors: Those that are required to produce results, and those that may optionally produce results. The parallel operation only succeeds if all of the required requestors succeed. Failure of optional requestors does not cause the parallel operation to fail.
-
-The result maps the success values of the required requestors and optional requestors into a single array. The value produced by the first element of the requestors array provides the first element of the result.
+`parseq.par_all` returns a requestor that processes the `requestor_array` requestors in parallel, producing an array of all of results. The value produced by the first element of the `requestor_array` provides the first element of the result. If any requestor fails, the pending requestors are cancelled and this operation fails.
 
 If the `time_limit` argument is supplied, then a time limit is imposed. The result must be complete before the time expires.
 
-If there is no time limit, and if there are required requestors, then the parallel operation is finished when all of the required requestors are done. All unfinished optional requestors will be cancelled.
-
-The `time_option` parameter works when there are both required requestors and optional requestors.  It can have one of three values:
-
-|`time_option` | Effect
--------- | ------
-|`undefined` | The optional requestors must finish before the required requestors finish. The required requestors must finish before the time limit, if there is one.
-|`true` | The required requestors and the optional requestors must all finish before the time limit.
-|`false` | The required requestors have no time limit. The optional requestors must finish before the required finish and the time limit, whichever is later.
+If there is no time limit, then the `par_all` operation is finished when all of the requestors are successful or one has failed.
 
 If `throttle` is not `undefined` or `0`, then there will be a limit on the number of requestors that will be active at a time.
 
-## Parallel Object
+## Par_any
 
-    parseq.parallel_object(
-        required_object,
-        optional_object,
+    parseq.par_any(
+        requestor_array,
         time_limit,
-        time_option,
         throttle
     )
 
-`parseq.parallel_object` is like `parseq.parallel` except that it operates on objects of requestors instead of on arrays of requestors. If successful, it will deliver an object of results. A key from an object of requestors will be used as the key for the requestor's result.
+`parseq.par_any` returns a requestor that processes the `requestor_array` requestors in parallel, producing an array of all of results. The value produced by the first element of the `requestor_array` provides the first element of the result. If one or more requestors succeed, then this operation succeeds.
+
+If the `time_limit` argument is supplied, then a time limit is imposed. If the time expires, the pending requestors are cancelled.
+
+If there is no time limit, then the `par_any` operation is finished when all of the requestors are finished.
+
+If `throttle` is not `undefined` or `0`, then there will be a limit on the number of requestors that will be active at a time.
 
 ## Race
 
@@ -150,7 +136,7 @@ If `throttle` is not `undefined` or `0`, then there will be a limit on the numbe
         throttle
     )
 
-`parseq.race` returns a requestor that starts all of the requestors in `requestor_array` in parallel. Its result is the result of the first of those requestors to successfully finish. All of the other requestors will be cancelled. If all of those requestors fail, then the race fails.
+`parseq.race` returns a requestor that starts all of the requestors in `requestor_array` in par_all. Its result is the result of the first of those requestors to successfully finish. All of the other requestors will be cancelled. If all of those requestors fail, then the race fails.
 
 If the `time_limit` argument is supplied, then if no requestor has been successful in the allotted time, then the race fails, and all pending requestors are cancelled.
 

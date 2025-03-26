@@ -81,7 +81,7 @@ function run(
 // milliseconds, and a throttle.
 
 // If all goes well, we call all of the requestor functions in the array. Each
-// of them  might return a cancel function that is kept in the 'cancel_array'.
+// of them might return a cancel function that is kept in the 'cancel_array'.
 
     let cancel_array = new Array(requestor_array.length);
     let next_number = 0;
@@ -494,6 +494,42 @@ function parallel_object(
     };
 }
 
+function par_all(requestors, time_limit, throttle) {
+
+// A par_all runs all of the requestors, and succeeds if they are all successful.
+
+    return (
+        Array.isArray(requestors)
+        ? parallel
+        : parallel_record
+    )(
+        requestors,
+        undefined,
+        time_limit,
+        undefined,
+        throttle,
+        "par_all"
+    );
+}
+
+function par_any(requestors, time_limit, throttle) {
+
+// A par_any runs all of the requestors, and succeeds if they are all successful.
+
+    return (
+        Array.isArray(requestors)
+        ? parallel
+        : parallel_record
+    )(
+        undefined,
+        requestors,
+        time_limit,
+        true,
+        throttle,
+        "par_any"
+    );
+}
+
 function race(requestor_array, time_limit, throttle) {
 
 // The 'race' factory returns a requestor that starts all of the
@@ -579,6 +615,8 @@ export default Object.freeze({
     fallback,
     parallel,
     parallel_object,
+    par_all,
+    par_any,
     race,
     sequence
 });
