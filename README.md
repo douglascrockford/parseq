@@ -1,5 +1,7 @@
 # Parseq
 
+THIS PROJECT IS OBSOLETE. IT HAS BEEN SUPERSEDED BY [PRONTO](https://www.crockford.com/pronto.html)</a>.
+
 Better living thru eventuality!
 
 Parseq provides a straightforward functional approach to the management of eventuality. Parseq embraces the paradigm of distributed message passing.

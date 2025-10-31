@@ -1,6 +1,8 @@
 // parseq.js
 // Douglas Crockford
-// 2020-11-09
+// 2025-10-31
+
+// THIS PROJECT IS OBSOLETE. IT HAS BEEN SUPERSEDED BY PRONTO.
 
 // Better living thru eventuality!
 
